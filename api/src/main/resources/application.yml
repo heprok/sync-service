@@ -1,0 +1,31 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:postgresql://${env.DB_HOST:localhost}:${env.DB_PORT:5432}/${env.spring_profiles_active}_sync
+    username: ${env.DB_USER:ok}
+    password: ${env.DB_PASSWORD:ok}
+    hikari:
+      idle-timeout: 20000
+      minimum-idle: 1
+      maximum-pool-size: 8
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallbackToSystemLocale: false
+  profiles:
+    active: ${env.spring_profiles_active:local}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    generate-ddl: false
+    show-sql: false
+    open-in-view: false
+  liquibase:
+    change-log: migration/master.yml
+app:
+  app-endpoints:
+    company: http://company-service.${env.spring_profiles_active}.svc.cluster.local:8080/
+    connection: http://connection-service.${env.spring_profiles_active}.svc.cluster.local:8080/
+    user: http://user-service.${env.spring_profiles_active}.svc.cluster.local:8080/
+    companyservice: http://companyservice-service.${env.spring_profiles_active}.svc.cluster.local:8080/

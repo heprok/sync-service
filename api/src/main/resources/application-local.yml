@@ -1,0 +1,13 @@
+server:
+  port: 8400
+  error:
+    include-stacktrace: always
+spring:
+  jpa:
+    show-sql: true
+app:
+  app-endpoints:
+    company: http://192.168.0.60:8080/
+    connection: http://192.168.0.60:8300/
+    user: http://192.168.0.60:80:8400/
+    companyservice: http://192.168.0.60:8090/

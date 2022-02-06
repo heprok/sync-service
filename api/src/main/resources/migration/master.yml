@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      file: migration/1.changelog.yml
