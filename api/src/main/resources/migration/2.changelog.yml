@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: oleg@briolink.com
+      changes:
+        - insert:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: User
+        - insert:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Company
+        - insert:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: CompanyService
+        - insert:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  value: 4
+              - column:
+                  name: name
+                  value: Connection
+        - insert:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  value: 5
+              - column:
+                  name: name
+                  value: Search
+        - insert:
+            tableName: service
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: User
+        - insert:
+            tableName: service
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Company
+        - insert:
+            tableName: service
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: CompanyService
+        - insert:
+            tableName: service
+            columns:
+              - column:
+                  name: id
+                  value: 4
+              - column:
+                  name: name
+                  value: Connection

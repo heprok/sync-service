@@ -1,6 +1,6 @@
 package com.briolink.syncservice.api.exception
 
-import com.briolink.syncservice.api.enumeration.MicroServiceEnum
+import com.briolink.syncservice.api.enumeration.ServiceEnum
 import com.briolink.syncservice.api.util.LocaleMessage
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,7 +19,7 @@ class RestGlobalExceptionHandler(private val localeMessage: LocaleMessage) {
     private fun getResponseEntityWithTranslateMessage(
         ex: ExceptionInterface,
         instant: Instant? = null,
-        service: MicroServiceEnum? = null
+        service: ServiceEnum? = null
     ) =
         ResponseEntity<ErrorResponse>(
             ex.errorResponse.apply {

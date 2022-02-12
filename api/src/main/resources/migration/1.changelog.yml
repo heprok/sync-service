@@ -4,7 +4,7 @@ databaseChangeLog:
       author: oleg@briolink.com
       changes:
         - createTable:
-            tableName: sync_info
+            tableName: service
             columns:
               - column:
                   name: id
@@ -12,6 +12,87 @@ databaseChangeLog:
                   autoIncrement: true
                   constraints:
                     primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: updater
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: sync
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: completed
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: completed_with_error
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: changed
+                  type: timestamp
+                  constraints:
+                    nullable: true
+        - createTable:
+            tableName: sync_service
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: sync_id
+                  type: int
+                  constraints:
+                    foreignKeyName: fk_sync_service_sync_id
+                    references: sync(id)
+                    nullable: false
+              - column:
+                  name: service
+                  type: int
+                  constraints:
+                    foreignKeyName: fk_sync_service_service_id
+                    references: service(id)
+                    nullable: false
+              - column:
+                  name: updater
+                  type: int
+                  constraints:
+                    foreignKeyName: fk_sync_service_updater_id
+                    references: updater(id)
+                    nullable: false
               - column:
                   name: completed
                   type: boolean
@@ -30,7 +111,7 @@ databaseChangeLog:
                   constraints:
                     nullable: true
         - createTable:
-            tableName: sync_log
+            tableName: error_updater
             columns:
               - column:
                   name: id
@@ -39,22 +120,16 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
               - column:
-                  name: name_service
-                  type: varchar(255)
+                  name: error
+                  type: text
                   constraints:
                     nullable: false
               - column:
-                  name: sync_info_id
+                  name: sync_service_id
                   type: int
                   constraints:
-                    foreignKeyName: fk_sync_log_sync_info_id
-                    references: sync_info(id)
-                    nullable: false
-              - column:
-                  name: completed
-                  type: boolean
-                  defaultValueBoolean: false
-                  constraints:
+                    foreignKeyName: fk_error_sync_service_id
+                    references: sync_service(id)
                     nullable: false
               - column:
                   name: created
@@ -62,8 +137,3 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
                   constraints:
                     nullable: false
-              - column:
-                  name: changed
-                  type: timestamp
-                  constraints:
-                    nullable: true

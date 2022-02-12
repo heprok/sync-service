@@ -1,10 +1,11 @@
 package com.briolink.syncservice.api.controller
 
 import com.briolink.syncservice.api.dto.PeriodSyncDto
-import com.briolink.syncservice.api.enumeration.MicroServiceEnum
 import com.briolink.syncservice.api.enumeration.PeriodSyncEnum
-import com.briolink.syncservice.api.jpa.entity.SyncInfo
-import com.briolink.syncservice.api.jpa.entity.SyncLog
+import com.briolink.syncservice.api.enumeration.ServiceEnum
+import com.briolink.syncservice.api.enumeration.UpdaterEnum
+import com.briolink.syncservice.api.jpa.entity.SyncEntity
+import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
 import com.briolink.syncservice.api.service.SyncService
 import com.briolink.syncservice.api.type.PeriodDateTime
 import io.swagger.annotations.Api
@@ -19,8 +20,10 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import javax.validation.Valid
+import javax.validation.constraints.NotNull
 
 @RestController
 @Validated
@@ -36,22 +39,33 @@ class SyncController(private val syncService: SyncService) {
     @ApiOperation("Start sync")
     fun start(
         @Valid @RequestBody periodSync: PeriodSyncDto
-    ): ResponseEntity<SyncInfo> {
+    ): ResponseEntity<SyncEntity> {
         return ResponseEntity(syncService.startSync(), HttpStatus.OK)
     }
 
     @PostMapping("/completed")
-    @ApiOperation("Completed sync at service")
+    @ApiOperation("Completed sync at updater")
     fun completed(
-        @ApiParam(value = "Service name", required = true) service: MicroServiceEnum
-    ): ResponseEntity<SyncLog> {
-        return ResponseEntity(syncService.completedSyncLog(service), HttpStatus.OK)
+        @NotNull @RequestParam("updater") @ApiParam(value = "Updater name", required = true) updater: UpdaterEnum,
+        @NotNull @RequestParam("service") @ApiParam(value = "Service name", required = true) service: ServiceEnum,
+    ): ResponseEntity<SyncServiceEntity> {
+        return ResponseEntity(syncService.completedUpdaterSync(service = service, updater = updater), HttpStatus.OK)
+    }
+
+    @PostMapping("/error")
+    @ApiOperation("Create error and stop sync")
+    fun error(
+        @NotNull @RequestParam @ApiParam(value = "Sync service Id", required = true) syncServiceId: Int,
+        @NotNull @RequestParam @ApiParam(value = "Text error") errorText: String,
+    ): ResponseEntity<Any> {
+        syncService.addErrorUpdater(syncServiceId = syncServiceId, errorText = errorText)
+        return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
 //    @PostMapping("/stop")
 //    @ApiOperation("Stop sync")
-//    fun stop(): ResponseEntity<SyncInfo> {
-//        return ResponseEntity(syncService.completedSyncLog(), HttpStatus.OK)
+//    fun stop(): ResponseEntity<Sync> {
+//        return ResponseEntity(syncService.completedSync(), HttpStatus.OK)
 //    }
 
     @GetMapping

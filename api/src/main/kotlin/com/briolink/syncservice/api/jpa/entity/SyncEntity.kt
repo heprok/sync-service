@@ -11,15 +11,18 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "sync_info")
-class SyncInfo {
+@Table(name = "sync")
+class SyncEntity {
     @Id
-    @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     var id: Int? = null
 
     @Column(name = "completed", nullable = false)
     var completed: Boolean = false
+
+    @Column(name = "completed_with_error", nullable = false)
+    var completedWithError: Boolean = false
 
     @CreationTimestamp
     @Column(name = "created", nullable = false)
@@ -27,5 +30,5 @@ class SyncInfo {
 
     @UpdateTimestamp
     @Column(name = "changed")
-    val changed: Instant? = null
+    var changed: Instant? = null
 }

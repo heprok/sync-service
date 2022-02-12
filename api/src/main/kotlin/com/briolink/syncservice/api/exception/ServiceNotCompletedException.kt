@@ -2,7 +2,7 @@ package com.briolink.syncservice.api.exception
 
 import org.springframework.http.HttpStatus
 
-class SyncLogNotCompletedException() : RuntimeException(), ExceptionInterface {
+class ServiceNotCompletedException() : RuntimeException(), ExceptionInterface {
     override val httpsStatus: HttpStatus = HttpStatus.BAD_REQUEST
-    override val code: String = "sync-log.not-completed"
+    override val code: String = "service.not-completed"
 }

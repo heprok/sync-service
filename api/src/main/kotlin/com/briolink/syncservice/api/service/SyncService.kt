@@ -1,14 +1,21 @@
 package com.briolink.syncservice.api.service
 
 import com.briolink.syncservice.api.config.AppEndpointsProperties
-import com.briolink.syncservice.api.enumeration.MicroServiceEnum
+import com.briolink.syncservice.api.enumeration.ServiceEnum
+import com.briolink.syncservice.api.enumeration.UpdaterEnum
+import com.briolink.syncservice.api.exception.ServiceNotCompletedException
+import com.briolink.syncservice.api.exception.ServiceNotFoundException
 import com.briolink.syncservice.api.exception.SyncAlreadyStartedException
-import com.briolink.syncservice.api.exception.SyncLogNotCompletedException
 import com.briolink.syncservice.api.exception.SyncNotStartedException
-import com.briolink.syncservice.api.jpa.entity.SyncInfo
-import com.briolink.syncservice.api.jpa.entity.SyncLog
-import com.briolink.syncservice.api.jpa.repository.SyncInfoRepository
-import com.briolink.syncservice.api.jpa.repository.SyncLogRepository
+import com.briolink.syncservice.api.exception.SyncServiceNotFoundException
+import com.briolink.syncservice.api.jpa.entity.ErrorUpdaterEntity
+import com.briolink.syncservice.api.jpa.entity.SyncEntity
+import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
+import com.briolink.syncservice.api.jpa.repository.ErrorRepository
+import com.briolink.syncservice.api.jpa.repository.ServiceRepository
+import com.briolink.syncservice.api.jpa.repository.SyncRepository
+import com.briolink.syncservice.api.jpa.repository.SyncServiceRepository
+import com.briolink.syncservice.api.jpa.repository.UpdaterRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,37 +26,53 @@ import javax.persistence.EntityNotFoundException
 @Transactional
 class SyncService(
     private val appEndpointsProperties: AppEndpointsProperties,
-    private val syncInfoRepository: SyncInfoRepository,
-    private val syncLogRepository: SyncLogRepository,
+    private val syncRepository: SyncRepository,
+    private val updaterRepository: UpdaterRepository,
+    private val serviceRepository: ServiceRepository,
+    private val syncServiceRepository: SyncServiceRepository,
+    private val errorRepository: ErrorRepository,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    fun startSync(): SyncInfo {
-        val syncInfoNotCompleted = syncInfoRepository.findLastNotCompleted()
+    fun startSync(): SyncEntity {
+        val syncInfoNotCompleted = syncRepository.findLastNotCompleted()
 
         if (syncInfoNotCompleted.isPresent)
             throw SyncAlreadyStartedException(syncInfoNotCompleted.get().created)
 
-        nextSyncLog()
+        val sync = syncRepository.save(SyncEntity())
+        nextSyncService()
 
-        return syncInfoRepository.save(SyncInfo())
+        return sync
     }
 
-    fun startSyncEventAtService(service: MicroServiceEnum, syncInfo: SyncInfo? = null): SyncLog {
+    fun startSyncEventAtService(serviceEnum: ServiceEnum, syncEntity: SyncEntity? = null): List<SyncServiceEntity> {
 
-        val syncInfo =
-            syncInfo ?: syncInfoRepository.findLastNotCompleted().orElseThrow { throw SyncNotStartedException() }
+        val sync =
+            syncEntity ?: syncRepository.findLastNotCompleted().orElseThrow { throw SyncNotStartedException() }
 
-        val syncLogNotCompleted = syncLogRepository.findLastNotCompletedByServiceName(service.name)
+        val service =
+            serviceRepository.findById(serviceEnum.id).orElseThrow { throw ServiceNotFoundException(serviceEnum) }
+        val listSyncService = mutableListOf<SyncServiceEntity>()
+        updaterRepository.findAll().forEach {
+            val syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id!!, it.id!!)
 
-        if (syncLogNotCompleted.isPresent)
-            throw SyncAlreadyStartedException(syncLogNotCompleted.get().created, service)
+            if (syncService.isPresent)
+                throw SyncAlreadyStartedException(syncService.get().created, serviceEnum)
 
-        val endpointService = when (service) {
-            MicroServiceEnum.User -> appEndpointsProperties.user
-            MicroServiceEnum.Company -> appEndpointsProperties.company
-            MicroServiceEnum.CompanyService -> appEndpointsProperties.companyService
-            MicroServiceEnum.Connection -> appEndpointsProperties.connection
+            SyncServiceEntity().apply {
+                this.sync = sync
+                this.service = service
+                this.updater = it
+                listSyncService.add(syncServiceRepository.save(this))
+            }
+        }
+
+        val endpointService = when (serviceEnum) {
+            ServiceEnum.User -> appEndpointsProperties.user
+            ServiceEnum.Company -> appEndpointsProperties.company
+            ServiceEnum.CompanyService -> appEndpointsProperties.companyService
+            ServiceEnum.Connection -> appEndpointsProperties.connection
         }
 
         val webClient = WebClient.create(endpointService + "api/v1")
@@ -59,59 +82,78 @@ class SyncService(
             .bodyToMono(Void::class.java)
             .block()
 
-        val syncLog = SyncLog().apply {
-            this.service = service
-            this.syncInfo = syncInfo
-        }
-        return syncLogRepository.save(syncLog)
+        return listSyncService
     }
 
-    fun completedSyncLog(service: MicroServiceEnum): SyncLog {
-        var syncLog = syncLogRepository.findLastNotCompletedByServiceName(service.name)
+    fun completedUpdaterSync(service: ServiceEnum, updater: UpdaterEnum): SyncServiceEntity {
+        var syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id, updater.id)
             .orElseThrow { throw EntityNotFoundException() }
 
-        syncLog.completed = true
-        syncLog = syncLogRepository.save(syncLog)
-        nextSyncLog(syncLog)
-        return syncLog
+        syncService.completed = true
+        syncService = syncServiceRepository.save(syncService)
+        nextSyncService(syncService)
+        return syncService
     }
 
-    fun completedSyncInfo(): SyncInfo {
-        val syncInfo = syncInfoRepository.findLastNotCompleted().orElseThrow { throw SyncNotStartedException() }
-        if (syncLogRepository.existsMotCompleted()) {
-            syncLogRepository.findAllNotCompleted().forEach {
-                logger.info(it.service.name + " at started " + it.created)
+    fun addErrorUpdater(syncServiceId: Int, errorText: String) {
+        syncServiceRepository.findById(syncServiceId).orElseThrow { SyncServiceNotFoundException(syncServiceId) }
+            .apply {
+                val error = ErrorUpdaterEntity().let {
+                    it.syncService = this
+                    it.error = errorText
+                    errorRepository.save(it)
+                }
+                errors?.add(error) ?: mutableListOf(error)
+                sync.completed = true
+                sync.completedWithError = true
+                completed = true
+
+                syncServiceRepository.save(this)
             }
-            throw SyncLogNotCompletedException()
-        }
-        syncInfo.completed = true
-
-        return syncInfoRepository.save(syncInfo)
     }
 
-    fun nextSyncLog(prevSyncLog: SyncLog? = null) {
-        if (prevSyncLog == null) {
-            startSyncEventAtService(MicroServiceEnum.Company)
+    fun completedSync(): SyncEntity {
+        val sync = syncRepository.findLastNotCompleted().orElseThrow { throw SyncNotStartedException() }
+        if (syncServiceRepository.existsMotCompletedBySyncId(sync.id!!)) {
+            syncServiceRepository.findAllNotCompleted(sync.id!!).forEach {
+                logger.info(it.service.name + " updater " + it.updater.name + " not completed at created" + it.created)
+            }
+            throw ServiceNotCompletedException()
+        }
+        sync.completed = true
+
+        return syncRepository.save(sync)
+    }
+
+    fun existsUpdaterNotCompleted(service: ServiceEnum): Boolean =
+        syncServiceRepository.existsMotCompletedByServiceId(service.id)
+
+    fun nextSyncService(prevSyncServiceEntity: SyncServiceEntity? = null) {
+        if (prevSyncServiceEntity == null) {
+            startSyncEventAtService(ServiceEnum.Company)
             return
         }
 
-        if (prevSyncLog.service == MicroServiceEnum.Company) {
-            startSyncEventAtService(MicroServiceEnum.User, prevSyncLog.syncInfo)
-            startSyncEventAtService(MicroServiceEnum.CompanyService, prevSyncLog.syncInfo)
+        if (prevSyncServiceEntity.sync.completedWithError || existsUpdaterNotCompleted(prevSyncServiceEntity.service.enum))
+            return
+
+        if (prevSyncServiceEntity.service.enum == ServiceEnum.Company) {
+            startSyncEventAtService(ServiceEnum.User, prevSyncServiceEntity.sync)
+            startSyncEventAtService(ServiceEnum.CompanyService, prevSyncServiceEntity.sync)
         }
 
-        if (prevSyncLog.service == MicroServiceEnum.User) {
-            if (!syncLogRepository.existsMotCompletedByNameService(MicroServiceEnum.CompanyService.name))
-                startSyncEventAtService(MicroServiceEnum.Connection)
+        if (prevSyncServiceEntity.service.enum == ServiceEnum.User) {
+            if (!syncServiceRepository.existsMotCompletedByServiceId(ServiceEnum.CompanyService.id))
+                startSyncEventAtService(ServiceEnum.Connection)
         }
 
-        if (prevSyncLog.service == MicroServiceEnum.CompanyService) {
-            if (!syncLogRepository.existsMotCompletedByNameService(MicroServiceEnum.User.name))
-                startSyncEventAtService(MicroServiceEnum.Connection)
+        if (prevSyncServiceEntity.service.enum == ServiceEnum.CompanyService) {
+            if (!syncServiceRepository.existsMotCompletedByServiceId(ServiceEnum.User.id))
+                startSyncEventAtService(ServiceEnum.Connection)
         }
 
-        if (prevSyncLog.service == MicroServiceEnum.Connection) {
-            completedSyncInfo()
+        if (prevSyncServiceEntity.service.enum == ServiceEnum.Connection) {
+            completedSync()
         }
     }
 }
