@@ -1,6 +1,6 @@
 package com.briolink.syncservice.api.exception
 
-import com.briolink.syncservice.api.enumeration.ServiceEnum
+import com.briolink.lib.sync.enumeration.ServiceEnum
 import org.springframework.http.HttpStatus
 import javax.persistence.EntityNotFoundException
 

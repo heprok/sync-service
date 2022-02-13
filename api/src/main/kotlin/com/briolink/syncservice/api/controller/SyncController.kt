@@ -1,13 +1,13 @@
 package com.briolink.syncservice.api.controller
 
+import com.briolink.lib.sync.enumeration.PeriodSyncEnum
+import com.briolink.lib.sync.enumeration.ServiceEnum
+import com.briolink.lib.sync.enumeration.UpdaterEnum
+import com.briolink.lib.sync.model.PeriodDateTime
 import com.briolink.syncservice.api.dto.PeriodSyncDto
-import com.briolink.syncservice.api.enumeration.PeriodSyncEnum
-import com.briolink.syncservice.api.enumeration.ServiceEnum
-import com.briolink.syncservice.api.enumeration.UpdaterEnum
 import com.briolink.syncservice.api.jpa.entity.SyncEntity
 import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
 import com.briolink.syncservice.api.service.SyncService
-import com.briolink.syncservice.api.type.PeriodDateTime
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam

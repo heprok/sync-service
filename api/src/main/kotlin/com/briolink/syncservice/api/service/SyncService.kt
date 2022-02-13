@@ -1,8 +1,8 @@
 package com.briolink.syncservice.api.service
 
+import com.briolink.lib.sync.enumeration.ServiceEnum
+import com.briolink.lib.sync.enumeration.UpdaterEnum
 import com.briolink.syncservice.api.config.AppEndpointsProperties
-import com.briolink.syncservice.api.enumeration.ServiceEnum
-import com.briolink.syncservice.api.enumeration.UpdaterEnum
 import com.briolink.syncservice.api.exception.ServiceNotCompletedException
 import com.briolink.syncservice.api.exception.ServiceNotFoundException
 import com.briolink.syncservice.api.exception.SyncAlreadyStartedException

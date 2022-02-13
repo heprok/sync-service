@@ -1,6 +1,6 @@
 package com.briolink.syncservice.api.jpa.entity
 
-import com.briolink.syncservice.api.enumeration.ServiceEnum
+import com.briolink.lib.sync.enumeration.ServiceEnum
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
