@@ -40,7 +40,14 @@ class SyncController(private val syncService: SyncService) {
     fun start(
         @Valid @RequestBody periodSync: PeriodSyncDto
     ): ResponseEntity<SyncEntity> {
-        return ResponseEntity(syncService.startSync(), HttpStatus.OK)
+        return ResponseEntity(
+            syncService.startSync(
+                periodSync.periodSync?.let {
+                    if (it == PeriodSyncEnum.AllTime) null else PeriodDateTime.fromEnum(it)
+                }
+            ),
+            HttpStatus.OK
+        )
     }
 
     @PostMapping("/completed")
@@ -55,10 +62,12 @@ class SyncController(private val syncService: SyncService) {
     @PostMapping("/error")
     @ApiOperation("Create error and stop sync")
     fun error(
-        @NotNull @RequestParam @ApiParam(value = "Sync service Id", required = true) syncServiceId: Int,
+        @NotNull @RequestParam @ApiParam(value = "Sync id", required = true) syncId: Int,
+        @NotNull @RequestParam @ApiParam(value = "Updater name", required = true) updater: UpdaterEnum,
+        @NotNull @RequestParam @ApiParam(value = "Service name", required = true) service: ServiceEnum,
         @NotNull @RequestParam @ApiParam(value = "Text error") errorText: String,
     ): ResponseEntity<Any> {
-        syncService.addErrorUpdater(syncServiceId = syncServiceId, errorText = errorText)
+        syncService.addErrorUpdater(syncId = syncId, updater = updater, service = service, errorText = errorText)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 

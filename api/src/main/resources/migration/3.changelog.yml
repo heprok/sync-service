@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: oleg@briolink.com
+      changes:
+        addColumn:
+          tableName: sync
+          columns:
+            - column:
+                name: period
+                type: tsrange
+                constraints:
+                  nullable: true

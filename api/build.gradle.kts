@@ -33,6 +33,8 @@ dependencies {
     // SWAGGER
     implementation("io.springfox:springfox-boot-starter:${Versions.SPRINGFOX}")
 
+    // Hibernate Types 55
+    implementation("com.vladmihalcea:hibernate-types-55:${Versions.HIBERNATE_TYPES_55}")
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

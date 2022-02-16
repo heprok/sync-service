@@ -18,4 +18,7 @@ interface SyncServiceRepository : JpaRepository<SyncServiceEntity, Int> {
 
     @Query("SELECT (count(s) > 0) FROM SyncServiceEntity s WHERE s.completed = false AND s.service.id = ?1")
     fun existsMotCompletedByServiceId(serviceId: Int): Boolean
+
+    @Query("SELECT s FROM SyncServiceEntity s WHERE s.sync.id = ?1 AND s.updater.id = ?2 AND s.service.id = ?3")
+    fun findBySyncIdAndUpdaterIdAndServiceId(syncId: Int, updaterId: Int, serviceId: Int): Optional<SyncServiceEntity>
 }

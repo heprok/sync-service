@@ -2,6 +2,7 @@ package com.briolink.syncservice.api.service
 
 import com.briolink.lib.sync.enumeration.ServiceEnum
 import com.briolink.lib.sync.enumeration.UpdaterEnum
+import com.briolink.lib.sync.model.PeriodDateTime
 import com.briolink.syncservice.api.config.AppEndpointsProperties
 import com.briolink.syncservice.api.exception.ServiceNotCompletedException
 import com.briolink.syncservice.api.exception.ServiceNotFoundException
@@ -16,8 +17,10 @@ import com.briolink.syncservice.api.jpa.repository.ServiceRepository
 import com.briolink.syncservice.api.jpa.repository.SyncRepository
 import com.briolink.syncservice.api.jpa.repository.SyncServiceRepository
 import com.briolink.syncservice.api.jpa.repository.UpdaterRepository
+import com.vladmihalcea.hibernate.type.range.Range
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
 import javax.persistence.EntityNotFoundException
@@ -34,13 +37,17 @@ class SyncService(
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    fun startSync(): SyncEntity {
+    fun startSync(period: PeriodDateTime? = null): SyncEntity {
         val syncInfoNotCompleted = syncRepository.findLastNotCompleted()
 
         if (syncInfoNotCompleted.isPresent)
             throw SyncAlreadyStartedException(syncInfoNotCompleted.get().created)
 
-        val sync = syncRepository.save(SyncEntity())
+        val sync = syncRepository.save(
+            SyncEntity().apply {
+                this.period = period?.let { Range.open(period.startDateTime, period.endDateTime) }
+            }
+        )
         nextSyncService()
 
         return sync
@@ -77,7 +84,7 @@ class SyncService(
 
         val webClient = WebClient.create(endpointService + "api/v1")
         webClient.post()
-            .uri("/sync")
+            .uri("/sync?start=${sync.period?.lower()}&end=${sync.period?.upper()}&syncId=${sync.id!!}")
             .retrieve()
             .bodyToMono(Void::class.java)
             .block()
@@ -95,8 +102,13 @@ class SyncService(
         return syncService
     }
 
-    fun addErrorUpdater(syncServiceId: Int, errorText: String) {
-        syncServiceRepository.findById(syncServiceId).orElseThrow { SyncServiceNotFoundException(syncServiceId) }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun addErrorUpdater(syncId: Int, errorText: String, updater: UpdaterEnum, service: ServiceEnum) {
+        println(syncId)
+        println(updater)
+        println(service)
+        syncServiceRepository.findBySyncIdAndUpdaterIdAndServiceId(syncId, updater.id, service.id)
+            .orElseThrow { SyncServiceNotFoundException() }
             .apply {
                 val error = ErrorUpdaterEntity().let {
                     it.syncService = this
