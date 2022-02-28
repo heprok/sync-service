@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -44,17 +43,17 @@ class SyncController(private val syncService: SyncService) {
             syncService.startSync(
                 periodSync.periodSync?.let {
                     if (it == PeriodSyncEnum.AllTime) null else PeriodDateTime.fromEnum(it)
-                }
+                },
             ),
-            HttpStatus.OK
+            HttpStatus.OK,
         )
     }
 
     @PostMapping("/completed")
     @ApiOperation("Completed sync at updater")
     fun completed(
-        @NotNull @RequestParam("updater") @ApiParam(value = "Updater name", required = true) updater: UpdaterEnum,
-        @NotNull @RequestParam("service") @ApiParam(value = "Service name", required = true) service: ServiceEnum,
+        @NotNull @RequestParam @ApiParam(value = "Updater name", required = true) updater: UpdaterEnum,
+        @NotNull @RequestParam @ApiParam(value = "Service name", required = true) service: ServiceEnum,
     ): ResponseEntity<SyncServiceEntity> {
         return ResponseEntity(syncService.completedUpdaterSync(service = service, updater = updater), HttpStatus.OK)
     }
@@ -76,13 +75,13 @@ class SyncController(private val syncService: SyncService) {
 //    fun stop(): ResponseEntity<Sync> {
 //        return ResponseEntity(syncService.completedSync(), HttpStatus.OK)
 //    }
-
-    @GetMapping
-    @ApiOperation("Info")
-    fun info(
-        @ApiParam(value = "Period", required = true) periodSync: PeriodSyncEnum
-    ): String {
-        return PeriodDateTime.fromEnum(periodSync)
-            .let { it.startDateTime.toString() + " - " + it.endDateTime.toString() }
-    }
+//
+//    @GetMapping
+//    @ApiOperation("Info")
+//    fun info(
+//        @ApiParam(value = "Period", required = true) periodSync: PeriodSyncEnum
+//    ): String {
+//        return PeriodDateTime.fromEnum(periodSync)
+//            .let { it.startDateTime.toString() + " - " + it.endDateTime.toString() }
+//    }
 }

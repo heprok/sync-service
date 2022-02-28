@@ -7,7 +7,7 @@ spring:
     show-sql: true
 app:
   app-endpoints:
-    company: http://192.168.0.23:8080/
-    connection: http://192.168.0.60:8300/
-    user: http://192.168.0.60:80:8400/
-    companyservice: http://192.168.0.60:8090/
+    company: http://192.168.0.83:8080/
+    connection: http://192.168.0.83:8300/
+    user: http://192.168.0.60:83:8400/
+    companyservice: http://192.168.0.83:8090/

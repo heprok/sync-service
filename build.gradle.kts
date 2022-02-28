@@ -28,15 +28,19 @@ allprojects {
 subprojects {
     repositories {
         mavenCentral()
-        // Briolink Sync lib
-        maven {
-            url = uri("https://gitlab.com/api/v4/projects/33688770/packages/maven")
-            authentication {
-                create<HttpHeaderAuthentication>("header")
-            }
-            credentials(HttpHeaderCredentials::class) {
-                name = "Deploy-Token"
-                value = System.getenv("CI_DEPLOY_PASSWORD")
+        setOf(
+            29889174, // Briolink Event lib
+            33688770, // Briolink Sync lib
+        ).forEach {
+            maven {
+                url = uri("https://gitlab.com/api/v4/projects/$it/packages/maven")
+                authentication {
+                    create<HttpHeaderAuthentication>("header")
+                }
+                credentials(HttpHeaderCredentials::class) {
+                    name = "Deploy-Token"
+                    value = System.getenv("CI_DEPLOY_PASSWORD")
+                }
             }
         }
         mavenLocal()

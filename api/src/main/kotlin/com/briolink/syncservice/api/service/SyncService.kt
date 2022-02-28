@@ -46,7 +46,7 @@ class SyncService(
         val sync = syncRepository.save(
             SyncEntity().apply {
                 this.period = period?.let { Range.open(period.startDateTime, period.endDateTime) }
-            }
+            },
         )
         nextSyncService()
 
@@ -104,9 +104,6 @@ class SyncService(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun addErrorUpdater(syncId: Int, errorText: String, updater: UpdaterEnum, service: ServiceEnum) {
-        println(syncId)
-        println(updater)
-        println(service)
         syncServiceRepository.findBySyncIdAndUpdaterIdAndServiceId(syncId, updater.id, service.id)
             .orElseThrow { SyncServiceNotFoundException() }
             .apply {
