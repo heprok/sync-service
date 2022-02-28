@@ -6,6 +6,26 @@ arn:aws:iam::585533447476:role/BackendServiceRole_{{ .Values.werf.env }}
 {{- end -}}
 {{- end -}}
 
+{{- define "app.clusterIssuer" -}}
+{{- if eq .Values.werf.env "prod" -}}
+zerossl-prod
+{{- else -}}
+cert-manager
+{{- end -}}
+{{- end -}}
+
+{{- define "app.subname" -}}
+{{- if eq .Values.werf.env "prod" -}}
+app
+{{- else -}}
+{{ .Values.werf.env }}
+{{- end -}}
+{{- end -}}
+
+{{- define "app.hostname" -}}
+{{ .Values.werf.name }}.{{ include "app.subname" . }}.briolink.com
+{{- end -}}
+
 {{- define "app.envVars" -}}
 - name: spring_profiles_active
   value: {{ .Values.werf.env | quote }}
