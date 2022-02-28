@@ -116,7 +116,7 @@ class SyncService(
                 sync.completed = true
                 sync.completedWithError = true
                 completed = true
-
+                syncRepository.save(sync)
                 syncServiceRepository.save(this)
             }
     }
