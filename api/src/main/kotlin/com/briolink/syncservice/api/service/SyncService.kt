@@ -54,10 +54,10 @@ class SyncService(
     }
 
     fun startSyncEventAtService(serviceEnum: ServiceEnum, syncEntity: SyncEntity? = null): List<SyncServiceEntity> {
-
         val sync =
             syncEntity ?: syncRepository.findLastNotCompleted().orElseThrow { throw SyncNotStartedException() }
 
+        logger.info("Start sync at service: $serviceEnum syncId: ${sync.id}")
         val service =
             serviceRepository.findById(serviceEnum.id).orElseThrow { throw ServiceNotFoundException(serviceEnum) }
         val listSyncService = mutableListOf<SyncServiceEntity>()
@@ -93,6 +93,7 @@ class SyncService(
     }
 
     fun completedUpdaterSync(service: ServiceEnum, updater: UpdaterEnum): SyncServiceEntity {
+        logger.info("Completed sync from service: $service updater: $updater ")
         var syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id, updater.id)
             .orElseThrow { throw EntityNotFoundException() }
 
@@ -104,6 +105,7 @@ class SyncService(
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun addErrorUpdater(syncId: Int, errorText: String, updater: UpdaterEnum, service: ServiceEnum) {
+        logger.info("Add updater error: $errorText from updater: $updater service: $service")
         syncServiceRepository.findBySyncIdAndUpdaterIdAndServiceId(syncId, updater.id, service.id)
             .orElseThrow { SyncServiceNotFoundException() }
             .apply {
