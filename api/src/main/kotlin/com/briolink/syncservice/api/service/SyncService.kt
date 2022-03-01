@@ -9,6 +9,7 @@ import com.briolink.syncservice.api.exception.ServiceNotFoundException
 import com.briolink.syncservice.api.exception.SyncAlreadyStartedException
 import com.briolink.syncservice.api.exception.SyncNotStartedException
 import com.briolink.syncservice.api.exception.SyncServiceNotFoundException
+import com.briolink.syncservice.api.exception.UpdaterAlreadyCompletedException
 import com.briolink.syncservice.api.jpa.entity.ErrorUpdaterEntity
 import com.briolink.syncservice.api.jpa.entity.SyncEntity
 import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClient
-import javax.persistence.EntityNotFoundException
 
 @Service
 @Transactional
@@ -95,7 +95,7 @@ class SyncService(
     fun completedUpdaterSync(service: ServiceEnum, updater: UpdaterEnum): SyncServiceEntity {
         logger.info("Completed sync from service: $service updater: $updater ")
         var syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id, updater.id)
-            .orElseThrow { throw EntityNotFoundException() }
+            .orElseThrow { throw UpdaterAlreadyCompletedException() }
 
         syncService.completed = true
         syncService = syncServiceRepository.save(syncService)
