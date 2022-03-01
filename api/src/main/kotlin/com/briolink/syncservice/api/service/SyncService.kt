@@ -167,4 +167,7 @@ class SyncService(
             completedSync()
         }
     }
+
+    fun getLastSync(): SyncEntity? =
+        syncRepository.findLastOrNull()
 }

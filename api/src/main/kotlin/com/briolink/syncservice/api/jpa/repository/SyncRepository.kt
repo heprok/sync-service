@@ -9,4 +9,7 @@ import java.util.Optional
 interface SyncRepository : JpaRepository<SyncEntity, Int> {
     @Query("SELECT s FROM SyncEntity s WHERE s.completed = false ORDER BY s.id DESC")
     fun findLastNotCompleted(pageRequest: PageRequest = PageRequest.of(0, 1)): Optional<SyncEntity>
+
+    @Query("SELECT s FROM SyncEntity s ORDER BY s.id DESC")
+    fun findLastOrNull(pageRequest: PageRequest = PageRequest.of(0, 1)): SyncEntity?
 }

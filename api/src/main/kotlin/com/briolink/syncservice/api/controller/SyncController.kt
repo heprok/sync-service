@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -70,18 +71,17 @@ class SyncController(private val syncService: SyncService) {
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 
-//    @PostMapping("/stop")
+    //    @PostMapping("/stop")
 //    @ApiOperation("Stop sync")
 //    fun stop(): ResponseEntity<Sync> {
 //        return ResponseEntity(syncService.completedSync(), HttpStatus.OK)
 //    }
 //
-//    @GetMapping
-//    @ApiOperation("Info")
-//    fun info(
-//        @ApiParam(value = "Period", required = true) periodSync: PeriodSyncEnum
-//    ): String {
-//        return PeriodDateTime.fromEnum(periodSync)
-//            .let { it.startDateTime.toString() + " - " + it.endDateTime.toString() }
-//    }
+    @GetMapping
+    @ApiOperation("Info")
+    fun info(): ResponseEntity<SyncEntity?> {
+        return syncService.getLastSync().let {
+            if (it == null) ResponseEntity(null, HttpStatus.NO_CONTENT) else ResponseEntity(it, HttpStatus.OK)
+        }
+    }
 }
