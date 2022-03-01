@@ -48,4 +48,9 @@ class RestGlobalExceptionHandler(private val localeMessage: LocaleMessage) {
     fun syncNotStarted(ex: SyncNotStartedException): ResponseEntity<ErrorResponse> {
         return getResponseEntityWithTranslateMessage(ex)
     }
+
+    @ExceptionHandler(UpdaterAlreadyCompletedException::class)
+    fun updaterAlreadyCompleted(ex: UpdaterAlreadyCompletedException): ResponseEntity<ErrorResponse> {
+        return getResponseEntityWithTranslateMessage(ex)
+    }
 }
