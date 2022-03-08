@@ -54,9 +54,10 @@ class SyncController(private val syncService: SyncService) {
     @ApiOperation("Completed sync at updater")
     fun completed(
         @NotNull @RequestParam @ApiParam(value = "Updater name", required = true) updater: UpdaterEnum,
+        @NotNull @RequestParam @ApiParam(value = "Sync id", required = true) syncId: Int,
         @NotNull @RequestParam @ApiParam(value = "Service name", required = true) service: ServiceEnum,
     ): ResponseEntity<SyncServiceEntity> {
-        return ResponseEntity(syncService.completedUpdaterSync(service = service, updater = updater), HttpStatus.OK)
+        return ResponseEntity(syncService.completedUpdaterSync(syncId = syncId, service = service, updater = updater), HttpStatus.OK)
     }
 
     @PostMapping("/error")

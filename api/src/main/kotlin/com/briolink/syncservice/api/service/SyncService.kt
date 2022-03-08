@@ -9,7 +9,6 @@ import com.briolink.syncservice.api.exception.ServiceNotFoundException
 import com.briolink.syncservice.api.exception.SyncAlreadyStartedException
 import com.briolink.syncservice.api.exception.SyncNotStartedException
 import com.briolink.syncservice.api.exception.SyncServiceNotFoundException
-import com.briolink.syncservice.api.exception.UpdaterAlreadyCompletedException
 import com.briolink.syncservice.api.jpa.entity.ErrorUpdaterEntity
 import com.briolink.syncservice.api.jpa.entity.SyncEntity
 import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
@@ -62,7 +61,7 @@ class SyncService(
             serviceRepository.findById(serviceEnum.id).orElseThrow { throw ServiceNotFoundException(serviceEnum) }
         val listSyncService = mutableListOf<SyncServiceEntity>()
         updaterRepository.findAll().forEach {
-            val syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id!!, it.id!!)
+            val syncService = syncServiceRepository.findBySyncIdServiceAndUpdater(sync.id!!, service.id!!, it.id!!)
 
             if (syncService.isPresent)
                 throw SyncAlreadyStartedException(syncService.get().created, serviceEnum)
@@ -92,10 +91,10 @@ class SyncService(
         return listSyncService
     }
 
-    fun completedUpdaterSync(service: ServiceEnum, updater: UpdaterEnum): SyncServiceEntity {
+    fun completedUpdaterSync(syncId: Int, service: ServiceEnum, updater: UpdaterEnum): SyncServiceEntity {
         logger.info("Completed sync from service: $service updater: $updater ")
-        var syncService = syncServiceRepository.findLastNotCompletedByServiceAndUpdater(service.id, updater.id)
-            .orElseThrow { throw UpdaterAlreadyCompletedException() }
+        var syncService = syncServiceRepository.findBySyncIdServiceAndUpdater(syncId, service.id, updater.id)
+            .orElseThrow { throw SyncServiceNotFoundException() }
 
         syncService.completed = true
         syncService = syncServiceRepository.save(syncService)
