@@ -6,7 +6,7 @@ object Versions {
     const val KOTLIN = "1.6.10"
     const val SPRING_BOOT = "2.5.5"
     const val SPRING_DOTENV = "2.4.1"
-    const val BRIOLINK_SYNC = "0.1.5-SNAPSHOT"
+    const val BRIOLINK_SYNC = "0.1.6-SNAPSHOT"
     const val SPRINGFOX = "3.0.0"
     const val HIBERNATE_TYPES_55 = "2.12.1"
     const val LIQUIBASE_CORE = "4.6.2"

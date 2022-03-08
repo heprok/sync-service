@@ -7,7 +7,7 @@ import java.util.Optional
 
 interface SyncServiceRepository : JpaRepository<SyncServiceEntity, Int> {
 
-    @Query("SELECT s FROM SyncServiceEntity s WHERE s.syncId = ?1 AND s.service.id = ?2 AND s.updater.id = ?3")
+    @Query("SELECT s FROM SyncServiceEntity s WHERE s.sync.id = ?1 AND s.service.id = ?2 AND s.updater.id = ?3")
     fun findBySyncIdServiceAndUpdater(syncId: Int, serviceId: Int, updater: Int): Optional<SyncServiceEntity>
 
     @Query("SELECT (count(s) > 0) FROM SyncServiceEntity s WHERE s.completed = false AND s.sync.id = ?1")
