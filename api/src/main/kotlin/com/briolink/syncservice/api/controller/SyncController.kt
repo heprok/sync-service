@@ -5,6 +5,7 @@ import com.briolink.lib.sync.enumeration.ServiceEnum
 import com.briolink.lib.sync.enumeration.UpdaterEnum
 import com.briolink.lib.sync.model.PeriodDateTime
 import com.briolink.syncservice.api.dto.PeriodSyncDto
+import com.briolink.syncservice.api.dto.SyncInfo
 import com.briolink.syncservice.api.jpa.entity.SyncEntity
 import com.briolink.syncservice.api.jpa.entity.SyncServiceEntity
 import com.briolink.syncservice.api.service.SyncService
@@ -80,7 +81,7 @@ class SyncController(private val syncService: SyncService) {
 //
     @GetMapping
     @ApiOperation("Info")
-    fun info(): ResponseEntity<SyncEntity?> {
+    fun info(): ResponseEntity<SyncInfo?> {
         return syncService.getLastSync().let {
             if (it == null) ResponseEntity(null, HttpStatus.NO_CONTENT) else ResponseEntity(it, HttpStatus.OK)
         }

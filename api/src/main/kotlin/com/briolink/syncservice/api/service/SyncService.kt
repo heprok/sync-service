@@ -4,6 +4,9 @@ import com.briolink.lib.sync.enumeration.ServiceEnum
 import com.briolink.lib.sync.enumeration.UpdaterEnum
 import com.briolink.lib.sync.model.PeriodDateTime
 import com.briolink.syncservice.api.config.AppEndpointsProperties
+import com.briolink.syncservice.api.dto.SyncInfo
+import com.briolink.syncservice.api.dto.SyncServiceInfo
+import com.briolink.syncservice.api.dto.SyncUpdaterInfo
 import com.briolink.syncservice.api.exception.ServiceNotCompletedException
 import com.briolink.syncservice.api.exception.ServiceNotFoundException
 import com.briolink.syncservice.api.exception.SyncAlreadyStartedException
@@ -22,7 +25,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.client.WebClient
+import java.time.ZoneOffset
 
 @Service
 @Transactional
@@ -81,12 +84,12 @@ class SyncService(
             ServiceEnum.Connection -> appEndpointsProperties.connection
         }
 
-        val webClient = WebClient.create(endpointService + "api/v1")
-        webClient.post()
-            .uri("/sync?start=${sync.period?.lower()}&end=${sync.period?.upper()}&syncId=${sync.id!!}")
-            .retrieve()
-            .bodyToMono(Void::class.java)
-            .block()
+//        val webClient = WebClient.create(endpointService + "api/v1")
+//        webClient.post()
+//            .uri("/sync?start=${sync.period?.lower()}&end=${sync.period?.upper()}&syncId=${sync.id!!}")
+//            .retrieve()
+//            .bodyToMono(Void::class.java)
+//            .block()
 
         return listSyncService
     }
@@ -167,6 +170,49 @@ class SyncService(
         }
     }
 
-    fun getLastSync(): SyncEntity? =
-        syncRepository.findLastOrNull()
+    fun getLastSync(): SyncInfo? {
+        val sync = syncRepository.findLastOrNull() ?: return null
+        val listSyncServiceInfo = mutableListOf<SyncServiceInfo>()
+
+        ServiceEnum.values().forEach { service ->
+            val listUpdaterInfo = mutableListOf<SyncUpdaterInfo>()
+
+            UpdaterEnum.values().forEach { updater ->
+                val syncService = syncServiceRepository.findBySyncIdAndUpdaterIdAndServiceIdOrNull(
+                    syncId = sync.id!!,
+                    updaterId = updater.id,
+                    serviceId = service.id,
+                )
+
+                SyncUpdaterInfo(
+                    updater = updater.name,
+                    completed = if (syncService?.completed == true) syncService.changed else null,
+                    errors = syncService?.errors ?: listOf(),
+                ).also {
+                    listUpdaterInfo.add(it)
+                }
+            }
+
+            SyncServiceInfo(
+                service = service.name,
+                completedUpdaters = listUpdaterInfo.filter { it.completed != null },
+                notCompletedUpdaters = listUpdaterInfo.filter { it.completed == null },
+            ).apply {
+                completed = if (notCompletedUpdaters.isEmpty()) completedUpdaters.maxOf { it.completed!! } else null
+                listSyncServiceInfo.add(this)
+            }
+        }
+
+        return SyncInfo(
+            syncId = sync.id,
+            completed = sync.completed,
+            completedWithError = sync.completedWithError,
+            syncStartDateTime = sync.period?.upper()?.toInstant(ZoneOffset.UTC),
+            syncEndDateTime = sync.period?.lower()?.toInstant(ZoneOffset.UTC),
+            notCompletedServices = listSyncServiceInfo.filter { it.completed == null },
+            completedServices = listSyncServiceInfo.filter { it.completed != null },
+            created = sync.created,
+            changed = sync.changed,
+        )
+    }
 }
